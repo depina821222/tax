@@ -1253,6 +1253,31 @@ async def seed_demo_data():
             "is_active": True,
             "created_at": datetime.now(timezone.utc).isoformat(),
             "updated_at": datetime.now(timezone.utc).isoformat()
+        },
+        # SMS Templates
+        {
+            "id": str(uuid.uuid4()),
+            "name": "booking_confirmation",
+            "type": "sms",
+            "subject_en": "",
+            "subject_es": "",
+            "body_en": "Hi {client_name}, your {service} appointment is confirmed for {date} at {time}. Location: {office_address}. Call {phone} with questions.",
+            "body_es": "Hola {client_name}, su cita de {service} esta confirmada para {date} a las {time}. Ubicacion: {office_address}. Llame al {phone} si tiene preguntas.",
+            "is_active": True,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "name": "reminder_48h",
+            "type": "sms",
+            "subject_en": "",
+            "subject_es": "",
+            "body_en": "Reminder: {client_name}, your {service} appointment is in 48 hours on {date} at {time}. Please bring all documents. Call {phone} to reschedule.",
+            "body_es": "Recordatorio: {client_name}, su cita de {service} es en 48 horas el {date} a las {time}. Traiga todos los documentos. Llame al {phone} para reprogramar.",
+            "is_active": True,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat()
         }
     ]
     
