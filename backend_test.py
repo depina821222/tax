@@ -344,6 +344,167 @@ class TaxOfficeAPITester:
             self.log_result("Clients List", False, error_msg=f"HTTP {response.status_code}")
             return False
 
+    def test_forgot_password(self):
+        """Test forgot password endpoint"""
+        print("\n🔍 Testing Forgot Password...")
+        
+        test_email = "admin@taxoffice.com"
+        
+        response = self.make_request('POST', 'auth/forgot-password', {
+            'email': test_email
+        }, auth_required=False)
+        
+        if response is None:
+            self.log_result("Forgot Password", False, error_msg="Connection failed")
+            return False
+            
+        if response.status_code == 200:
+            try:
+                data = response.json()
+                if 'message' in data:
+                    self.log_result("Forgot Password", True, {
+                        'email': test_email,
+                        'message': data.get('message')
+                    })
+                    return True
+                else:
+                    self.log_result("Forgot Password", False, error_msg="No message in response")
+                    return False
+            except:
+                self.log_result("Forgot Password", False, error_msg="Invalid JSON response")
+                return False
+        else:
+            try:
+                error_detail = response.json().get('detail', f'HTTP {response.status_code}')
+            except:
+                error_detail = f"HTTP {response.status_code}"
+            self.log_result("Forgot Password", False, error_msg=error_detail)
+            return False
+
+    def test_sms_status(self):
+        """Test SMS status endpoint"""
+        print("\n🔍 Testing SMS Status...")
+        
+        if not self.token:
+            self.log_result("SMS Status", False, error_msg="No auth token available")
+            return False
+            
+        response = self.make_request('GET', 'sms/status')
+        
+        if response is None:
+            self.log_result("SMS Status", False, error_msg="Connection failed")
+            return False
+            
+        if response.status_code == 200:
+            try:
+                data = response.json()
+                expected_fields = ['configured', 'service_name']
+                
+                if all(field in data for field in expected_fields):
+                    self.log_result("SMS Status", True, {
+                        'configured': data.get('configured'),
+                        'service_name': data.get('service_name'),
+                        'phone_number': data.get('phone_number', 'Not configured')
+                    })
+                    return True
+                else:
+                    # SMS endpoint might not exist yet - let's check if it's a 404
+                    self.log_result("SMS Status", False, error_msg=f"Missing expected fields: {data}")
+                    return False
+            except:
+                self.log_result("SMS Status", False, error_msg="Invalid JSON response")
+                return False
+        elif response.status_code == 404:
+            # SMS status endpoint might not be implemented yet
+            self.log_result("SMS Status", False, error_msg="SMS status endpoint not found (not implemented)")
+            return False
+        else:
+            self.log_result("SMS Status", False, error_msg=f"HTTP {response.status_code}")
+            return False
+
+    def test_domain_settings(self):
+        """Test domain settings endpoints"""
+        print("\n🔍 Testing Domain Settings...")
+        
+        if not self.token:
+            self.log_result("Domain Settings (GET)", False, error_msg="No auth token available")
+            return False
+            
+        # Test GET domain settings
+        response = self.make_request('GET', 'domain-settings')
+        
+        if response is None:
+            self.log_result("Domain Settings (GET)", False, error_msg="Connection failed")
+            return False
+            
+        if response.status_code == 200:
+            try:
+                data = response.json()
+                expected_fields = ['custom_domain', 'domain_verified', 'ssl_status']
+                
+                if all(field in data for field in expected_fields):
+                    self.log_result("Domain Settings (GET)", True, {
+                        'custom_domain': data.get('custom_domain'),
+                        'domain_verified': data.get('domain_verified'),
+                        'ssl_status': data.get('ssl_status')
+                    })
+                    return True
+                else:
+                    missing_fields = [f for f in expected_fields if f not in data]
+                    self.log_result("Domain Settings (GET)", False, error_msg=f"Missing fields: {missing_fields}")
+                    return False
+            except:
+                self.log_result("Domain Settings (GET)", False, error_msg="Invalid JSON response")
+                return False
+        else:
+            self.log_result("Domain Settings (GET)", False, error_msg=f"HTTP {response.status_code}")
+            return False
+
+    def test_domain_verification(self):
+        """Test domain verification endpoint"""
+        print("\n🔍 Testing Domain Verification...")
+        
+        if not self.token:
+            self.log_result("Domain Verification", False, error_msg="No auth token available")
+            return False
+            
+        # First set a test domain
+        test_domain = "test.example.com"
+        put_response = self.make_request('PUT', 'domain-settings', {
+            'custom_domain': test_domain
+        })
+        
+        if put_response and put_response.status_code == 200:
+            # Now test verification
+            response = self.make_request('POST', 'domain-settings/verify')
+            
+            if response is None:
+                self.log_result("Domain Verification", False, error_msg="Connection failed")
+                return False
+                
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    self.log_result("Domain Verification", True, {
+                        'domain': data.get('custom_domain'),
+                        'verified': data.get('domain_verified'),
+                        'ssl_status': data.get('ssl_status')
+                    })
+                    return True
+                except:
+                    self.log_result("Domain Verification", False, error_msg="Invalid JSON response")
+                    return False
+            else:
+                try:
+                    error_detail = response.json().get('detail', f'HTTP {response.status_code}')
+                except:
+                    error_detail = f"HTTP {response.status_code}"
+                self.log_result("Domain Verification", False, error_msg=error_detail)
+                return False
+        else:
+            self.log_result("Domain Verification", False, error_msg="Failed to set test domain")
+            return False
+
     def run_all_tests(self):
         """Run complete test suite"""
         print("🚀 Starting Tax Office CRM API Tests")
