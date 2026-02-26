@@ -97,6 +97,7 @@ class User(UserBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     is_active: bool = True
+    force_password_reset: bool = False  # When True, user must change password on next login
 
 class UserResponse(BaseModel):
     id: str
@@ -105,11 +106,13 @@ class UserResponse(BaseModel):
     role: str
     language: str
     is_active: bool
+    force_password_reset: bool = False
 
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserResponse
+    force_password_reset: bool = False
 
 class ClientBase(BaseModel):
     full_name: str
