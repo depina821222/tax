@@ -238,6 +238,12 @@ class BrandSettingsModel(BaseModel):
     social_facebook: str = ""
     social_instagram: str = ""
     social_linkedin: str = ""
+    # Custom domain configuration
+    custom_domain_admin: str = ""  # e.g., admin.depinacrm.com
+    custom_domain_portal: str = ""  # e.g., portal.depinacrm.com
+    custom_domain_booking: str = ""  # e.g., book.depinacrm.com
+    domain_verified: bool = False
+    ssl_enabled: bool = False
 
 class BookingRequest(BaseModel):
     service_id: str
