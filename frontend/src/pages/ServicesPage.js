@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Card, CardContent } from '../components/ui/card';
@@ -9,7 +10,7 @@ import { Textarea } from '../components/ui/textarea';
 import { Switch } from '../components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
-import { Plus, Edit, Trash2, Briefcase, Clock, FileCheck } from 'lucide-react';
+import { Plus, Edit, Trash2, Briefcase, Clock, FileCheck, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 
@@ -18,6 +19,7 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 export default function ServicesPage() {
   const { language, t } = useLanguage();
   const { isAdmin } = useAuth();
+  const navigate = useNavigate();
   
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
