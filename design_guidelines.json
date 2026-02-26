@@ -1,0 +1,120 @@
+{
+  "project_name": "TaxPortal_Elite",
+  "design_philosophy": {
+    "theme_name": "Old Money Tech",
+    "core_concept": "Digital Concierge for Wealth",
+    "emotional_drivers": ["Trust", "Precision", "Authority", "Calm"],
+    "visual_style": "Dark Navy Corporate meets Gold Leaf Luxury",
+    "bilingual_strategy": "First-class citizen toggle in Navbar (EN/ES)"
+  },
+  "typography": {
+    "font_family_heading": "\"Playfair Display\", serif",
+    "font_family_body": "\"Manrope\", sans-serif",
+    "google_fonts_import": "https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap",
+    "usage_rules": {
+      "headings": "Use Playfair Display for all H1, H2, and Hero text. Letter spacing -0.02em. Font weight 600 or 700.",
+      "subheadings": "Use Manrope Uppercase, tracking-widest (0.2em), text-xs or text-sm. Color: Gold/Muted.",
+      "body": "Use Manrope. Relaxed line-height (1.6).",
+      "numbers": "Use Manrope tabular-nums for all financial data and dates."
+    }
+  },
+  "colors": {
+    "palette": {
+      "primary": "#D4AF37",
+      "primary_foreground": "#020617",
+      "secondary": "#1E293B",
+      "secondary_foreground": "#F8FAFC",
+      "background": "#020617",
+      "foreground": "#F1F5F9",
+      "muted": "#334155",
+      "muted_foreground": "#94A3B8",
+      "accent": "#D4AF37",
+      "accent_foreground": "#020617",
+      "border": "#1E293B",
+      "input": "#1E293B",
+      "ring": "#D4AF37"
+    },
+    "gradients": {
+      "hero_glow": "radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.15) 0%, rgba(2, 6, 23, 0) 70%)",
+      "card_surface": "linear-gradient(180deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.7) 100%)",
+      "gold_text": "linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)"
+    },
+    "semantic_usage": {
+      "dashboard_bg": "bg-slate-950",
+      "sidebar_bg": "bg-slate-900/50 backdrop-blur-xl border-r border-slate-800",
+      "card_bg": "bg-slate-900/40 border border-slate-800/60",
+      "success": "#10B981",
+      "warning": "#F59E0B",
+      "error": "#EF4444"
+    }
+  },
+  "layout_strategies": {
+    "dashboard": {
+      "structure": "Sidebar (Left, 260px) + Header (Top, Sticky) + Main Content (Fluid)",
+      "grid_system": "Bento Grid (Grid-cols-12). Widgets align to grid. Gap-6.",
+      "container_style": "Max-width-7xl mx-auto p-6 md:p-8"
+    },
+    "booking_page": {
+      "structure": "Centered Single Column 'Concierge' Wizard.",
+      "background": "Dark Navy with 'Abstract Gold Lines' faint overlay.",
+      "card_style": "Glassmorphism: bg-slate-900/80 backdrop-blur-md border border-white/10 shadow-2xl shadow-black/50"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-[#D4AF37] text-slate-950 hover:bg-[#B45309] rounded-sm font-semibold uppercase tracking-wide transition-all shadow-[0_0_15px_rgba(212,175,55,0.3)] hover:shadow-[0_0_25px_rgba(212,175,55,0.5)]",
+      "secondary": "bg-transparent border border-slate-700 text-slate-200 hover:border-[#D4AF37] hover:text-[#D4AF37] rounded-sm uppercase tracking-wide",
+      "ghost": "text-slate-400 hover:text-[#D4AF37] hover:bg-slate-800/50"
+    },
+    "cards": {
+      "dashboard_widget": "rounded-sm border border-slate-800 bg-slate-900/50 p-6 hover:border-slate-700 transition-colors",
+      "interactive": "cursor-pointer hover:-translate-y-1 transition-transform duration-300"
+    },
+    "inputs": {
+      "style": "bg-slate-950 border-slate-800 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] rounded-sm h-12 text-slate-200 placeholder:text-slate-600"
+    },
+    "navigation": {
+      "sidebar_item": "flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-400 hover:text-[#D4AF37] hover:bg-slate-800/50 rounded-sm transition-colors data-[active=true]:text-[#D4AF37] data-[active=true]:bg-slate-800/80 data-[active=true]:border-r-2 data-[active=true]:border-[#D4AF37]"
+    }
+  },
+  "assets": {
+    "images": {
+      "hero_background": "https://images.unsplash.com/photo-1758931156945-68a907e06d64?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NTN8MHwxfHNlYXJjaHwzfHxtb2Rlcm4lMjBsdXh1cnklMjBvZmZpY2UlMjBpbnRlcmlvciUyMGRhcmslMjBuYXZ5JTIwZ29sZHxlbnwwfHx8fDE3NzIwNTY4ODB8MA&ixlib=rb-4.1.0&q=85",
+      "login_cover": "https://images.unsplash.com/photo-1622482639238-4e003157cc30?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njl8MHwxfHNlYXJjaHwzfHxhYnN0cmFjdCUyMGdvbGQlMjBsaW5lcyUyMG9uJTIwZGFyayUyMGJsdWUlMjBiYWNrZ3JvdW5kfGVufDB8fHx8MTc3MjA1Njg4M3ww&ixlib=rb-4.1.0&q=85",
+      "staff_avatars": [
+        "https://images.unsplash.com/photo-1758518729314-b02874db8c37?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2OTV8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBjb3Jwb3JhdGUlMjBoZWFkc2hvdCUyMHNtaWxpbmclMjBzdWl0fGVufDB8fHx8MTc3MjA1Njg4MXww&ixlib=rb-4.1.0&q=85",
+        "https://images.unsplash.com/photo-14156490/pexels-photo-14156490.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2OTV8MHwxfHNlYXJjaHwyfHxwcm9mZXNzaW9uYWwlMjBjb3Jwb3JhdGUlMjBoZWFkc2hvdCUyMHNtaWxpbmclMjBzdWl0fGVufDB8fHx8MTc3MjA1Njg4MXww&ixlib=rb-4.1.0&q=85"
+      ],
+      "service_icons": {
+        "tax_prep": "https://images.unsplash.com/photo-1764087957302-ef0756ed8e0a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODF8MHwxfHNlYXJjaHwyfHxmaW5hbmNlJTIwdGF4JTIwZG9jdW1lbnRzJTIwcGVuJTIwbHV4dXJ5JTIwZGVza3xlbnwwfHx8fDE3NzIwNTY4ODJ8MA&ixlib=rb-4.1.0&q=85",
+        "audit": "https://images.unsplash.com/photo-1676701495975-0e2f422d118f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODF8MHwxfHNlYXJjaHwzfHxmaW5hbmNlJTIwdGF4JTIwZG9jdW1lbnRzJTIwcGVuJTIwbHV4dXJ5JTIwZGVza3xlbnwwfHx8fDE3NzIwNTY4ODJ8MA&ixlib=rb-4.1.0&q=85",
+        "consulting": "https://images.pexels.com/photos/6928997/pexels-photo-6928997.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
+      }
+    }
+  },
+  "animation_guidelines": {
+    "page_transition": "Initial fade-in + slight slide-up (opacity: 0->1, y: 20->0, duration: 0.6s, ease: outExpo)",
+    "hover_effects": "Micro-interactions only. Buttons scale 1.02. Cards lift -4px.",
+    "list_stagger": "Stagger children by 0.05s on load.",
+    "accessibility": "Respect prefers-reduced-motion."
+  },
+  "implementation_steps": [
+    "1. Setup Tailwind config with 'colors.slate' as base and custom gold.",
+    "2. Install 'Manrope' and 'Playfair Display' via Google Fonts.",
+    "3. Create base layout components (Sidebar, DashboardShell, PublicBookingShell).",
+    "4. Customize Shadcn components (Button, Card, Input) to match 'components' rules.",
+    "5. Implement Booking Page with 'Wizard' step logic.",
+    "6. Build Dashboard with 'Bento' grid.",
+    "7. Add bilingual toggle logic (use simple React Context or Zustand)."
+  ],
+  "universal_guidelines": [
+    "Don't make generic centered layouts.",
+    "Create depth through layered design elements with z-index hierarchy.",
+    "Use glass-morphism effects with backdrop filters (12-24px blur).",
+    "MUST NOT apply universal transition (transition: all).",
+    "MUST NOT center align the app container (.App { text-align: center }).",
+    "Always use modern button styles (pill or sharp).",
+    "NEVER use AI assistant Emoji characters."
+  ]
+}
