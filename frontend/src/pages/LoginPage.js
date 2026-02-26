@@ -6,7 +6,8 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
-import { Globe, Eye, EyeOff } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../components/ui/dialog';
+import { Globe, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 
@@ -14,7 +15,7 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 export default function LoginPage() {
   const { language, setLanguage, t } = useLanguage();
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, forcePasswordReset, clearForcePasswordReset } = useAuth();
   const navigate = useNavigate();
   
   const [email, setEmail] = useState('');
@@ -22,12 +23,19 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [checkingSetup, setCheckingSetup] = useState(true);
+  
+  // Force password reset modal
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [resetting, setResetting] = useState(false);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !forcePasswordReset) {
       navigate('/portal/dashboard');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, forcePasswordReset, navigate]);
 
   useEffect(() => {
     checkSetup();
@@ -51,14 +59,56 @@ export default function LoginPage() {
     setLoading(true);
     
     try {
-      await login(email, password);
-      toast.success(language === 'en' ? 'Welcome back!' : 'Bienvenido!');
-      navigate('/portal/dashboard');
+      const result = await login(email, password);
+      if (result.forcePasswordReset) {
+        setCurrentPassword(password);
+        setShowResetModal(true);
+        toast.warning(
+          language === 'en' 
+            ? 'Password reset required for security' 
+            : 'Se requiere cambio de contraseña por seguridad'
+        );
+      } else {
+        toast.success(language === 'en' ? 'Welcome back!' : 'Bienvenido!');
+        navigate('/portal/dashboard');
+      }
     } catch (error) {
       const message = error.response?.data?.detail || 'Login failed';
       toast.error(message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePasswordReset = async (e) => {
+    e.preventDefault();
+    
+    if (newPassword !== confirmPassword) {
+      toast.error(language === 'en' ? 'Passwords do not match' : 'Las contraseñas no coinciden');
+      return;
+    }
+    
+    if (newPassword.length < 8) {
+      toast.error(language === 'en' ? 'Password must be at least 8 characters' : 'La contraseña debe tener al menos 8 caracteres');
+      return;
+    }
+    
+    setResetting(true);
+    try {
+      await axios.post(`${API}/auth/change-password`, {
+        current_password: currentPassword,
+        new_password: newPassword
+      });
+      
+      toast.success(language === 'en' ? 'Password changed successfully!' : 'Contraseña cambiada exitosamente!');
+      clearForcePasswordReset();
+      setShowResetModal(false);
+      navigate('/portal/dashboard');
+    } catch (error) {
+      const message = error.response?.data?.detail || 'Failed to change password';
+      toast.error(message);
+    } finally {
+      setResetting(false);
     }
   };
 
@@ -72,6 +122,75 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 hero-glow">
+      {/* Force Password Reset Modal */}
+      <Dialog open={showResetModal} onOpenChange={() => {}}>
+        <DialogContent className="bg-slate-900 border-slate-800 sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-slate-100 flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-400" />
+              {language === 'en' ? 'Password Reset Required' : 'Cambio de Contraseña Requerido'}
+            </DialogTitle>
+            <DialogDescription className="text-slate-400">
+              {language === 'en' 
+                ? 'For security reasons, you must change your password before continuing.'
+                : 'Por razones de seguridad, debe cambiar su contraseña antes de continuar.'
+              }
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handlePasswordReset} className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <Label className="text-slate-300">
+                {language === 'en' ? 'New Password' : 'Nueva Contraseña'}
+              </Label>
+              <Input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="********"
+                required
+                minLength={8}
+                className="bg-slate-950 border-slate-800 focus:border-[#D4AF37]"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-slate-300">
+                {language === 'en' ? 'Confirm Password' : 'Confirmar Contraseña'}
+              </Label>
+              <Input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="********"
+                required
+                className="bg-slate-950 border-slate-800 focus:border-[#D4AF37]"
+              />
+            </div>
+            
+            <p className="text-xs text-slate-500">
+              {language === 'en' 
+                ? 'Password must be at least 8 characters long.'
+                : 'La contraseña debe tener al menos 8 caracteres.'
+              }
+            </p>
+            
+            <DialogFooter>
+              <Button 
+                type="submit" 
+                disabled={resetting}
+                className="w-full bg-[#D4AF37] text-slate-950 hover:bg-[#B8963A]"
+              >
+                {resetting 
+                  ? (language === 'en' ? 'Changing...' : 'Cambiando...') 
+                  : (language === 'en' ? 'Change Password' : 'Cambiar Contraseña')
+                }
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       <div className="w-full max-w-md animate-fade-in-up">
         {/* Language Toggle */}
         <div className="flex justify-end mb-6">
