@@ -17,6 +17,7 @@ Build a full-stack bilingual (EN/ES) CRM Portal + Appointment System for a small
 - **Email**: Resend (configurable via RESEND_API_KEY)
 - **SMS**: Twilio (configurable via TWILIO_* env vars)
 - **Auth**: JWT with bcrypt password hashing
+- **PDF**: ReportLab for server-side PDF generation
 
 ## User Personas
 1. **Admin**: Full access to manage staff, settings, services, templates, brand
@@ -46,7 +47,7 @@ Build a full-stack bilingual (EN/ES) CRM Portal + Appointment System for a small
 - [x] All backend APIs working (100% pass rate)
 - [x] All frontend pages functional
 - [x] Brand Settings with all tabs (Identity, Colors, Content, Contact, Domain)
-- [x] Demo data seeding with 3 staff, 5 clients, 10 appointments, 5 services
+- [x] Demo data seeding with 3 staff, 6 clients, 10+ appointments, 5 services
 
 ### P1 - Enhanced Features (COMPLETE)
 - [x] Forgot Password flow with email reset link (/portal/forgot-password)
@@ -56,13 +57,40 @@ Build a full-stack bilingual (EN/ES) CRM Portal + Appointment System for a small
 - [x] Domain verification with DNS instructions
 - [x] SSL status tracking
 
-### UI/UX Design Upgrade
-- [x] "Old Money Tech" design philosophy
-- [x] Playfair Display headings + Manrope body fonts
-- [x] Dark navy (#020617) + Metallic Gold (#D4AF37) palette
-- [x] Glass-morphism cards with backdrop blur
-- [x] Enhanced CSS animations and transitions
-- [x] Responsive layout with sidebar navigation
+### UX Improvements (COMPLETE - Feb 26, 2026)
+- [x] **Clickable Dashboard Items**: Recent Appointments and Recent Cases rows are now clickable
+  - Navigate to /portal/appointments/:id and /portal/cases/:id
+  - Open icon button appears on hover
+  - Works for both Admin and Staff roles
+- [x] **Appointment Detail Page** (/portal/appointments/:id)
+  - Shows appointment info, client details, service, date/time, status
+  - "Download Appointment Confirmation (PDF)" button
+  - Bilingual labels (EN/ES)
+- [x] **Case Detail Page** (/portal/cases/:id)
+  - Shows service request info, status, priority, due date
+  - Document Checklist with Completed/Pending status
+  - Missing Documents warning section
+  - Client sidebar with contact info
+  - Upcoming Appointment section
+  - "Download Case Summary (PDF)" button
+- [x] **Client Detail Page** enhancement
+  - Added "Download Client Summary (PDF)" button
+  - Shows appointment history, case history, notes
+
+### PDF Generation (COMPLETE - Feb 26, 2026)
+- [x] **Backend PDF Endpoints** using ReportLab
+  - GET /api/pdf/case/:caseId - Case Summary PDF
+  - GET /api/pdf/client/:clientId - Client Summary PDF
+  - GET /api/pdf/appointment/:appointmentId - Appointment Confirmation PDF
+- [x] **PDF Content**:
+  - Brand header (business name, phone, email, address)
+  - Client information section
+  - Service/appointment details
+  - Checklist progress (for cases)
+  - Notes section
+  - Professional footer with confidentiality note
+- [x] **Bilingual PDFs**: Labels in EN or ES based on client's preferred language
+- [x] **PDF Styling**: Clean typography, gold accent color, proper spacing
 
 ## Demo Credentials
 - Admin: admin@taxoffice.com / admin123
@@ -82,15 +110,48 @@ TWILIO_PHONE_NUMBER=+1234567890 (optional)
 FRONTEND_URL=https://your-domain.com
 ```
 
+## API Endpoints Summary
+
+### Authentication
+- POST /api/auth/login
+- POST /api/auth/register
+- POST /api/auth/forgot-password
+- POST /api/auth/reset-password
+
+### Resources
+- GET/POST /api/clients
+- GET/PUT/DELETE /api/clients/:id
+- GET /api/clients/:id/timeline
+- GET/POST /api/appointments
+- PUT/DELETE /api/appointments/:id
+- GET/POST /api/cases
+- PUT/DELETE /api/cases/:id
+- GET/POST /api/services
+- GET/POST /api/staff
+- GET/PUT /api/settings
+- GET/PUT /api/brand-settings
+
+### PDF Generation
+- GET /api/pdf/case/:caseId
+- GET /api/pdf/client/:clientId
+- GET /api/pdf/appointment/:appointmentId
+
+### Utilities
+- GET /api/health
+- POST /api/seed
+- GET /api/sms/status
+
 ## P2 Features (Backlog)
 - [ ] Immigration services toggle
 - [ ] Blocked dates management
 - [ ] Client document uploads
 - [ ] Advanced reporting/analytics
 - [ ] Multi-tenant support
+- [ ] Client portal (self-service)
 
 ## Next Tasks
 1. Add Resend API key to enable email sending
 2. Add Twilio credentials to enable SMS reminders
 3. Configure custom domain in Brand Settings
 4. Customize email/SMS templates as needed
+5. Deploy to production
