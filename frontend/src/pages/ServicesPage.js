@@ -167,38 +167,48 @@ export default function ServicesPage() {
         {services.map((service) => (
           <Card 
             key={service.id} 
-            className={`bg-slate-900/50 border-slate-800 hover:border-slate-700 transition-colors ${
-              !service.is_active ? 'opacity-50' : ''
-            }`}
+            onClick={() => navigate(`/portal/services/${service.id}`)}
+            onKeyDown={(e) => e.key === 'Enter' && navigate(`/portal/services/${service.id}`)}
+            tabIndex={0}
+            role="button"
+            aria-label={`${language === 'es' ? 'Ver detalles de' : 'View details for'} ${language === 'es' ? service.name_es : service.name_en}`}
+            className={`bg-slate-900/50 border-slate-800 cursor-pointer transition-all duration-200 
+              hover:border-[#D4AF37]/50 hover:shadow-lg hover:shadow-[#D4AF37]/5 hover:-translate-y-1
+              focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37]/50
+              group ${!service.is_active ? 'opacity-50' : ''}`}
+            data-testid={`service-card-${service.id}`}
           >
             <CardContent className="p-6">
               <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 bg-[#D4AF37]/20 rounded-sm flex items-center justify-center">
+                <div className="w-12 h-12 bg-[#D4AF37]/20 rounded-sm flex items-center justify-center group-hover:bg-[#D4AF37]/30 transition-colors">
                   <Briefcase className="w-6 h-6 text-[#D4AF37]" />
                 </div>
-                {isAdmin && (
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleOpenDialog(service)}
-                      className="text-slate-400 hover:text-[#D4AF37] h-8 w-8"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDelete(service.id)}
-                      className="text-slate-400 hover:text-red-400 h-8 w-8"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                )}
+                <div className="flex gap-1 items-center">
+                  {isAdmin && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => { e.stopPropagation(); handleOpenDialog(service); }}
+                        className="text-slate-400 hover:text-[#D4AF37] h-8 w-8"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => { e.stopPropagation(); handleDelete(service.id); }}
+                        className="text-slate-400 hover:text-red-400 h-8 w-8"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </>
+                  )}
+                  <ExternalLink className="w-4 h-4 text-slate-600 group-hover:text-[#D4AF37] transition-colors opacity-0 group-hover:opacity-100" />
+                </div>
               </div>
               
-              <h3 className="text-lg font-semibold text-slate-100 mb-1">
+              <h3 className="text-lg font-semibold text-slate-100 mb-1 group-hover:text-[#D4AF37] transition-colors">
                 {language === 'es' ? service.name_es : service.name_en}
               </h3>
               <p className="text-sm text-slate-400 mb-4 line-clamp-2">
@@ -227,6 +237,7 @@ export default function ServicesPage() {
                   <Switch
                     checked={service.is_active}
                     onCheckedChange={() => handleToggleActive(service)}
+                    onClick={(e) => e.stopPropagation()}
                   />
                 </div>
               )}
