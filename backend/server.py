@@ -403,7 +403,12 @@ async def login(credentials: UserLogin):
     
     token = create_token(user["id"], user["email"], user["role"])
     user_response = {k: v for k, v in user.items() if k != "password"}
-    return TokenResponse(access_token=token, user=UserResponse(**user_response))
+    force_reset = user.get("force_password_reset", False)
+    return TokenResponse(
+        access_token=token, 
+        user=UserResponse(**user_response),
+        force_password_reset=force_reset
+    )
 
 @api_router.get("/auth/me", response_model=UserResponse)
 async def get_me(user: dict = Depends(get_current_user)):
