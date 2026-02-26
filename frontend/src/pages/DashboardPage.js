@@ -237,11 +237,11 @@ export default function DashboardPage() {
         <Card className="bg-slate-900/50 border-slate-800">
           <CardHeader className="flex flex-row items-center justify-between pb-4">
             <CardTitle className="text-lg font-serif text-slate-100">
-              {t('recentCases')}
+              {language === 'es' ? 'Casos Recientes' : 'Recent Cases'}
             </CardTitle>
             <Link to="/portal/cases">
               <Button variant="ghost" size="sm" className="text-[#D4AF37] hover:text-[#B8963A]">
-                {t('viewAll')}
+                {language === 'es' ? 'Ver Todo' : 'View All'}
                 <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
             </Link>
@@ -253,7 +253,9 @@ export default function DashboardPage() {
               stats?.recent_cases?.map((caseItem) => (
                 <div 
                   key={caseItem.id} 
-                  className="flex items-center justify-between p-3 bg-slate-800/50 rounded-sm border border-slate-800"
+                  onClick={() => navigate(`/portal/cases/${caseItem.id}`)}
+                  className="flex items-center justify-between p-3 bg-slate-800/50 rounded-sm border border-slate-800 cursor-pointer hover:border-[#D4AF37]/50 hover:bg-slate-800 transition-all group"
+                  data-testid={`recent-case-${caseItem.id}`}
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-slate-700 rounded-sm flex items-center justify-center">
@@ -268,11 +270,21 @@ export default function DashboardPage() {
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    {getStatusBadge(caseItem.status)}
-                    <p className="text-xs text-slate-500 mt-1">
-                      {getStaffName(caseItem.assigned_staff_id)}
-                    </p>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      {getStatusBadge(caseItem.status)}
+                      <p className="text-xs text-slate-500 mt-1">
+                        {getStaffName(caseItem.assigned_staff_id)}
+                      </p>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="opacity-0 group-hover:opacity-100 text-[#D4AF37] transition-opacity"
+                      onClick={(e) => { e.stopPropagation(); navigate(`/portal/cases/${caseItem.id}`); }}
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
               ))
