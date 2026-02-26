@@ -1523,6 +1523,31 @@ async def test_email(request: EmailRequest, admin: dict = Depends(require_admin)
         return {"status": "success", "email_id": result.get("id")}
     return {"status": "failed", "message": "Email not sent (check API key)"}
 
+# ============ SMS TEST ============
+
+class SMSRequest(BaseModel):
+    recipient_phone: str
+    message: str
+
+@api_router.post("/sms/test")
+async def test_sms(request: SMSRequest, admin: dict = Depends(require_admin)):
+    """Test SMS sending"""
+    result = await send_sms_async(request.recipient_phone, request.message)
+    if result:
+        return {"status": "success", "sid": result.get("sid"), "message_status": result.get("status")}
+    return {"status": "failed", "message": "SMS not sent (check Twilio credentials)"}
+
+@api_router.get("/sms/status")
+async def get_sms_status(admin: dict = Depends(require_admin)):
+    """Check Twilio SMS configuration status"""
+    return {
+        "configured": twilio_client is not None,
+        "account_sid_set": bool(TWILIO_ACCOUNT_SID),
+        "auth_token_set": bool(TWILIO_AUTH_TOKEN),
+        "phone_number_set": bool(TWILIO_PHONE_NUMBER),
+        "phone_number": TWILIO_PHONE_NUMBER[-4:] if TWILIO_PHONE_NUMBER else None  # Last 4 digits only
+    }
+
 # ============ MAIN APP SETUP ============
 
 @api_router.get("/")
