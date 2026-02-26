@@ -9,6 +9,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(() => localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
+  const [forcePasswordReset, setForcePasswordReset] = useState(false);
 
   useEffect(() => {
     if (token) {
@@ -23,6 +24,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await axios.get(`${API}/auth/me`);
       setUser(response.data);
+      setForcePasswordReset(response.data.force_password_reset || false);
     } catch (error) {
       console.error('Failed to fetch user:', error);
       logout();
@@ -33,14 +35,15 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const response = await axios.post(`${API}/auth/login`, { email, password });
-    const { access_token, user: userData } = response.data;
+    const { access_token, user: userData, force_password_reset } = response.data;
     
     localStorage.setItem('token', access_token);
     axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
     setToken(access_token);
     setUser(userData);
+    setForcePasswordReset(force_password_reset || false);
     
-    return userData;
+    return { user: userData, forcePasswordReset: force_password_reset };
   };
 
   const logout = () => {
@@ -48,6 +51,7 @@ export const AuthProvider = ({ children }) => {
     delete axios.defaults.headers.common['Authorization'];
     setToken(null);
     setUser(null);
+    setForcePasswordReset(false);
   };
 
   const updateLanguage = async (language) => {
@@ -57,6 +61,10 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Failed to update language:', error);
     }
+  };
+
+  const clearForcePasswordReset = () => {
+    setForcePasswordReset(false);
   };
 
   const isAdmin = user?.role === 'admin';
@@ -70,7 +78,9 @@ export const AuthProvider = ({ children }) => {
       logout,
       updateLanguage,
       isAdmin,
-      isAuthenticated: !!user
+      isAuthenticated: !!user,
+      forcePasswordReset,
+      clearForcePasswordReset
     }}>
       {children}
     </AuthContext.Provider>
