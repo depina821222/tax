@@ -508,6 +508,196 @@ class TaxOfficeAPITester:
             self.log_result("Domain Verification", False, error_msg="Failed to set test domain")
             return False
 
+    def test_pdf_endpoints(self):
+        """Test PDF generation endpoints"""
+        print("\n🔍 Testing PDF Generation Endpoints...")
+        
+        if not self.token:
+            self.log_result("PDF Test Setup", False, error_msg="No auth token available")
+            return False
+
+        # First create a test client, service, appointment, and case
+        # Get existing clients and services for testing
+        clients_response = self.make_request('GET', 'clients')
+        services_response = self.make_request('GET', 'services')
+        appointments_response = self.make_request('GET', 'appointments')
+        cases_response = self.make_request('GET', 'cases')
+
+        if not all([clients_response and clients_response.status_code == 200,
+                   services_response and services_response.status_code == 200,
+                   appointments_response and appointments_response.status_code == 200,
+                   cases_response and cases_response.status_code == 200]):
+            self.log_result("PDF Test Setup", False, error_msg="Failed to fetch test data")
+            return False
+
+        try:
+            clients = clients_response.json()
+            services = services_response.json()
+            appointments = appointments_response.json()
+            cases = cases_response.json()
+
+            if not clients:
+                self.log_result("PDF Client PDF", False, error_msg="No clients found for testing")
+                return False
+            if not appointments:
+                self.log_result("PDF Appointment PDF", False, error_msg="No appointments found for testing")
+                return False
+            if not cases:
+                self.log_result("PDF Case PDF", False, error_msg="No cases found for testing")
+                return False
+
+            client_id = clients[0]['id']
+            appointment_id = appointments[0]['id']
+            case_id = cases[0]['id']
+
+            # Test Client PDF
+            client_pdf_response = self.make_request('GET', f'pdf/client/{client_id}')
+            if client_pdf_response and client_pdf_response.status_code == 200:
+                content_type = client_pdf_response.headers.get('content-type', '')
+                if 'application/pdf' in content_type:
+                    self.log_result("PDF Client PDF", True, {"client_id": client_id[:8]})
+                else:
+                    self.log_result("PDF Client PDF", False, error_msg=f"Wrong content type: {content_type}")
+            else:
+                self.log_result("PDF Client PDF", False, error_msg=f"HTTP {client_pdf_response.status_code if client_pdf_response else 'Connection failed'}")
+
+            # Test Case PDF
+            case_pdf_response = self.make_request('GET', f'pdf/case/{case_id}')
+            if case_pdf_response and case_pdf_response.status_code == 200:
+                content_type = case_pdf_response.headers.get('content-type', '')
+                if 'application/pdf' in content_type:
+                    self.log_result("PDF Case PDF", True, {"case_id": case_id[:8]})
+                else:
+                    self.log_result("PDF Case PDF", False, error_msg=f"Wrong content type: {content_type}")
+            else:
+                self.log_result("PDF Case PDF", False, error_msg=f"HTTP {case_pdf_response.status_code if case_pdf_response else 'Connection failed'}")
+
+            # Test Appointment PDF
+            appointment_pdf_response = self.make_request('GET', f'pdf/appointment/{appointment_id}')
+            if appointment_pdf_response and appointment_pdf_response.status_code == 200:
+                content_type = appointment_pdf_response.headers.get('content-type', '')
+                if 'application/pdf' in content_type:
+                    self.log_result("PDF Appointment PDF", True, {"appointment_id": appointment_id[:8]})
+                else:
+                    self.log_result("PDF Appointment PDF", False, error_msg=f"Wrong content type: {content_type}")
+            else:
+                self.log_result("PDF Appointment PDF", False, error_msg=f"HTTP {appointment_pdf_response.status_code if appointment_pdf_response else 'Connection failed'}")
+
+            return True
+
+        except Exception as e:
+            self.log_result("PDF Generation Tests", False, error_msg=f"Exception: {str(e)}")
+            return False
+
+    def test_appointments_endpoints(self):
+        """Test appointments CRUD operations"""
+        print("\n🔍 Testing Appointments Endpoints...")
+        
+        if not self.token:
+            self.log_result("Appointments Test", False, error_msg="No auth token available")
+            return False
+
+        # Test GET appointments
+        response = self.make_request('GET', 'appointments')
+        if response and response.status_code == 200:
+            try:
+                appointments = response.json()
+                if isinstance(appointments, list):
+                    # Check for reminder_sent_48h field in appointments
+                    if appointments and 'reminder_sent_48h' in appointments[0]:
+                        self.log_result("Appointments List with reminder_sent_48h", True, {
+                            'appointment_count': len(appointments),
+                            'has_reminder_field': True,
+                            'sample_reminder_status': appointments[0].get('reminder_sent_48h')
+                        })
+                    else:
+                        self.log_result("Appointments List", True, {
+                            'appointment_count': len(appointments),
+                            'has_reminder_field': False
+                        })
+                    return True
+                else:
+                    self.log_result("Appointments List", False, error_msg="Response is not a list")
+                    return False
+            except:
+                self.log_result("Appointments List", False, error_msg="Invalid JSON response")
+                return False
+        else:
+            self.log_result("Appointments List", False, error_msg=f"HTTP {response.status_code if response else 'Connection failed'}")
+            return False
+
+    def test_public_booking(self):
+        """Test public booking endpoint"""
+        print("\n🔍 Testing Public Booking...")
+        
+        # Get services first
+        services_response = self.make_request('GET', 'services?active_only=true', auth_required=False)
+        if not services_response or services_response.status_code != 200:
+            self.log_result("Public Booking", False, error_msg="Failed to get services")
+            return False
+
+        try:
+            services = services_response.json()
+            if not services:
+                self.log_result("Public Booking", False, error_msg="No services available")
+                return False
+
+            # Get available slots for tomorrow
+            tomorrow = (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d')
+            slots_response = self.make_request('GET', f'appointments/available-slots/{tomorrow}', auth_required=False)
+            
+            if not slots_response or slots_response.status_code != 200:
+                self.log_result("Public Booking", False, error_msg="Failed to get available slots")
+                return False
+
+            slots_data = slots_response.json()
+            available_slots = slots_data.get('slots', [])
+            
+            if not available_slots:
+                self.log_result("Public Booking", False, error_msg="No available slots for booking test")
+                return False
+
+            # Test booking
+            booking_data = {
+                'service_id': services[0]['id'],
+                'date': tomorrow,
+                'time': available_slots[0],
+                'full_name': 'Test Client',
+                'phone': '555-0123',
+                'email': 'test@example.com',
+                'notes': 'Test booking from API test',
+                'preferred_language': 'en'
+            }
+
+            response = self.make_request('POST', 'book', booking_data, auth_required=False)
+            if response and response.status_code == 200:
+                try:
+                    result = response.json()
+                    if 'appointment_id' in result and 'case_id' in result:
+                        self.log_result("Public Booking", True, {
+                            'appointment_id': result['appointment_id'][:8],
+                            'case_id': result['case_id'][:8],
+                            'message': result.get('message')
+                        })
+                        return True
+                    else:
+                        self.log_result("Public Booking", False, error_msg="Missing appointment_id or case_id in response")
+                        return False
+                except:
+                    self.log_result("Public Booking", False, error_msg="Invalid JSON response")
+                    return False
+            else:
+                try:
+                    error_detail = response.json().get('detail', f'HTTP {response.status_code}') if response else 'Connection failed'
+                except:
+                    error_detail = f"HTTP {response.status_code}" if response else 'Connection failed'
+                self.log_result("Public Booking", False, error_msg=error_detail)
+                return False
+
+        except Exception as e:
+            self.log_result("Public Booking", False, error_msg=f"Exception: {str(e)}")
+            return False
+
     def run_all_tests(self):
         """Run complete test suite"""
         print("🚀 Starting Tax Office CRM API Tests")
@@ -528,6 +718,12 @@ class TaxOfficeAPITester:
             self.test_clients_list()
             self.test_brand_settings_update()
             
+            # Appointments with reminder_sent_48h field
+            self.test_appointments_endpoints()
+            
+            # PDF Generation tests
+            self.test_pdf_endpoints()
+            
             # P1 Feature: SMS Status
             self.test_sms_status()
             
@@ -539,6 +735,9 @@ class TaxOfficeAPITester:
         self.test_services_list()
         self.test_brand_settings()
         self.test_available_slots()
+        
+        # Public booking test
+        self.test_public_booking()
         
         # Summary
         print("\n" + "=" * 50)
