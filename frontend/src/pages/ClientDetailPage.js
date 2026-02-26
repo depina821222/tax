@@ -135,18 +135,32 @@ export default function ClientDetailPage() {
   return (
     <div className="space-y-6 animate-fade-in-up" data-testid="client-detail-page">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link to="/portal/clients">
-          <Button variant="ghost" size="icon" className="text-slate-400 hover:text-[#D4AF37]">
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-slate-100 font-serif">{client.full_name}</h1>
-          <p className="text-slate-400 text-sm">
-            {language === 'es' ? 'Perfil del Cliente' : 'Client Profile'}
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Link to="/portal/clients">
+            <Button variant="ghost" size="icon" className="text-slate-400 hover:text-[#D4AF37]">
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-100 font-serif">{client.full_name}</h1>
+            <p className="text-slate-400 text-sm">
+              {language === 'es' ? 'Perfil del Cliente' : 'Client Profile'}
+            </p>
+          </div>
         </div>
+        <Button 
+          onClick={handleDownloadPDF}
+          disabled={downloading}
+          className="bg-[#D4AF37] text-slate-950 hover:bg-[#B8963A]"
+          data-testid="download-client-pdf-btn"
+        >
+          <Download className="w-4 h-4 mr-2" />
+          {downloading 
+            ? (language === 'es' ? 'Descargando...' : 'Downloading...') 
+            : (language === 'es' ? 'Descargar Resumen del Cliente (PDF)' : 'Download Client Summary (PDF)')
+          }
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
