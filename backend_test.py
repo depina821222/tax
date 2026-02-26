@@ -398,18 +398,21 @@ class TaxOfficeAPITester:
         if response.status_code == 200:
             try:
                 data = response.json()
-                expected_fields = ['configured', 'service_name']
+                # Check for expected fields based on actual response format
+                expected_fields = ['configured', 'account_sid_set', 'auth_token_set', 'phone_number_set']
                 
                 if all(field in data for field in expected_fields):
                     self.log_result("SMS Status", True, {
                         'configured': data.get('configured'),
-                        'service_name': data.get('service_name'),
+                        'account_sid_set': data.get('account_sid_set'),
+                        'auth_token_set': data.get('auth_token_set'),
+                        'phone_number_set': data.get('phone_number_set'),
                         'phone_number': data.get('phone_number', 'Not configured')
                     })
                     return True
                 else:
                     # SMS endpoint might not exist yet - let's check if it's a 404
-                    self.log_result("SMS Status", False, error_msg=f"Missing expected fields: {data}")
+                    self.log_result("SMS Status", False, error_msg=f"Missing expected fields in response: {data}")
                     return False
             except:
                 self.log_result("SMS Status", False, error_msg="Invalid JSON response")
