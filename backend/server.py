@@ -1139,6 +1139,507 @@ async def get_dashboard_stats(user: dict = Depends(get_current_user)):
         "recent_cases": recent_cases
     }
 
+# ============ PDF GENERATION ============
+
+# Bilingual PDF labels
+PDF_LABELS = {
+    "en": {
+        "case_summary": "Case Summary",
+        "client_summary": "Client Summary",
+        "appointment_confirmation": "Appointment Confirmation",
+        "confidential": "Confidential — For internal use only",
+        "generated_on": "Generated on",
+        "client_information": "Client Information",
+        "service_information": "Service Information",
+        "current_status": "Current Status",
+        "checklist_progress": "Checklist Progress",
+        "recent_notes": "Recent Notes",
+        "upcoming_appointment": "Upcoming Appointment",
+        "appointment_history": "Appointment History",
+        "case_history": "Case History",
+        "name": "Name",
+        "phone": "Phone",
+        "email": "Email",
+        "address": "Address",
+        "service": "Service",
+        "assigned_to": "Assigned To",
+        "status": "Status",
+        "stage": "Stage",
+        "due_date": "Due Date",
+        "priority": "Priority",
+        "completed": "Completed",
+        "pending": "Pending",
+        "date_time": "Date & Time",
+        "notes": "Notes",
+        "preferred_language": "Preferred Language",
+        "contact_information": "Contact Information",
+        "thank_you": "Thank you for choosing {business_name}. For questions call {phone}.",
+    },
+    "es": {
+        "case_summary": "Resumen del Caso",
+        "client_summary": "Resumen del Cliente",
+        "appointment_confirmation": "Confirmación de Cita",
+        "confidential": "Confidencial — Solo para uso interno",
+        "generated_on": "Generado el",
+        "client_information": "Información del Cliente",
+        "service_information": "Información del Servicio",
+        "current_status": "Estado Actual",
+        "checklist_progress": "Progreso de Documentos",
+        "recent_notes": "Notas Recientes",
+        "upcoming_appointment": "Próxima Cita",
+        "appointment_history": "Historial de Citas",
+        "case_history": "Historial de Casos",
+        "name": "Nombre",
+        "phone": "Teléfono",
+        "email": "Correo",
+        "address": "Dirección",
+        "service": "Servicio",
+        "assigned_to": "Asignado a",
+        "status": "Estado",
+        "stage": "Etapa",
+        "due_date": "Fecha Límite",
+        "priority": "Prioridad",
+        "completed": "Completado",
+        "pending": "Pendiente",
+        "date_time": "Fecha y Hora",
+        "notes": "Notas",
+        "preferred_language": "Idioma Preferido",
+        "contact_information": "Información de Contacto",
+        "thank_you": "Gracias por elegir {business_name}. Para preguntas llame al {phone}.",
+    }
+}
+
+async def get_brand_for_pdf():
+    """Get brand settings for PDF header"""
+    brand = await db.brand_settings.find_one({}, {"_id": 0}) or {}
+    settings = await db.settings.find_one({}, {"_id": 0}) or {}
+    return {
+        "business_name_en": brand.get("business_name_en", settings.get("business_name", "Tax Office")),
+        "business_name_es": brand.get("business_name_es", settings.get("business_name_es", "Oficina de Impuestos")),
+        "logo_url": brand.get("logo_url", ""),
+        "phone": brand.get("contact_phone", settings.get("phone", "")),
+        "email": brand.get("contact_email", settings.get("email", "")),
+        "address": brand.get("contact_address", settings.get("address", "")),
+    }
+
+def create_pdf_styles():
+    """Create custom styles for PDF"""
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(
+        name='CustomTitle',
+        fontName='Helvetica-Bold',
+        fontSize=18,
+        textColor=colors.HexColor('#1e293b'),
+        alignment=TA_CENTER,
+        spaceAfter=20
+    ))
+    styles.add(ParagraphStyle(
+        name='CustomHeading',
+        fontName='Helvetica-Bold',
+        fontSize=12,
+        textColor=colors.HexColor('#D4AF37'),
+        spaceBefore=15,
+        spaceAfter=8
+    ))
+    styles.add(ParagraphStyle(
+        name='CustomBody',
+        fontName='Helvetica',
+        fontSize=11,
+        textColor=colors.HexColor('#374151'),
+        spaceAfter=6
+    ))
+    styles.add(ParagraphStyle(
+        name='CustomFooter',
+        fontName='Helvetica-Oblique',
+        fontSize=9,
+        textColor=colors.HexColor('#6B7280'),
+        alignment=TA_CENTER
+    ))
+    return styles
+
+def build_pdf_header(elements, brand, lang, styles):
+    """Build PDF header with brand info"""
+    business_name = brand.get(f"business_name_{lang}", brand.get("business_name_en", "Tax Office"))
+    
+    # Header with business name
+    elements.append(Paragraph(business_name, styles['CustomTitle']))
+    
+    # Contact info
+    contact_parts = []
+    if brand.get("phone"):
+        contact_parts.append(f"Tel: {brand['phone']}")
+    if brand.get("email"):
+        contact_parts.append(brand['email'])
+    if contact_parts:
+        elements.append(Paragraph(" | ".join(contact_parts), styles['CustomFooter']))
+    
+    if brand.get("address"):
+        elements.append(Paragraph(brand['address'], styles['CustomFooter']))
+    
+    elements.append(Spacer(1, 20))
+    
+    # Separator line
+    line_table = Table([['']], colWidths=[7*inch])
+    line_table.setStyle(TableStyle([
+        ('LINEABOVE', (0, 0), (-1, 0), 2, colors.HexColor('#D4AF37')),
+    ]))
+    elements.append(line_table)
+    elements.append(Spacer(1, 15))
+
+def build_pdf_footer(elements, brand, lang, styles):
+    """Build PDF footer"""
+    labels = PDF_LABELS[lang]
+    business_name = brand.get(f"business_name_{lang}", brand.get("business_name_en", "Tax Office"))
+    phone = brand.get("phone", "")
+    
+    elements.append(Spacer(1, 30))
+    
+    # Separator line
+    line_table = Table([['']], colWidths=[7*inch])
+    line_table.setStyle(TableStyle([
+        ('LINEABOVE', (0, 0), (-1, 0), 1, colors.HexColor('#E5E7EB')),
+    ]))
+    elements.append(line_table)
+    
+    # Footer text
+    elements.append(Spacer(1, 10))
+    footer_text = labels["thank_you"].format(business_name=business_name, phone=phone)
+    elements.append(Paragraph(footer_text, styles['CustomFooter']))
+    elements.append(Spacer(1, 5))
+    elements.append(Paragraph(labels["confidential"], styles['CustomFooter']))
+    elements.append(Paragraph(f"{labels['generated_on']} {datetime.now(TIMEZONE).strftime('%Y-%m-%d %H:%M')}", styles['CustomFooter']))
+
+def create_info_table(data, styles):
+    """Create a styled info table"""
+    table = Table(data, colWidths=[2*inch, 4.5*inch])
+    table.setStyle(TableStyle([
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('TEXTCOLOR', (0, 0), (0, -1), colors.HexColor('#6B7280')),
+        ('TEXTCOLOR', (1, 0), (1, -1), colors.HexColor('#1f2937')),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+    ]))
+    return table
+
+@api_router.get("/pdf/case/{case_id}")
+async def generate_case_pdf(case_id: str, user: dict = Depends(get_current_user)):
+    """Generate Case Summary PDF"""
+    # Fetch case data
+    case = await db.service_requests.find_one({"id": case_id}, {"_id": 0})
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found")
+    
+    client = await db.clients.find_one({"id": case["client_id"]}, {"_id": 0})
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+    
+    service = await db.services.find_one({"id": case["service_id"]}, {"_id": 0})
+    staff_member = None
+    if case.get("assigned_staff_id"):
+        staff_member = await db.staff.find_one({"id": case["assigned_staff_id"]}, {"_id": 0})
+    
+    # Get next appointment for this case
+    next_apt = await db.appointments.find_one(
+        {"client_id": client["id"], "date": {"$gte": datetime.now(TIMEZONE).strftime("%Y-%m-%d")}, "status": {"$nin": ["cancelled", "no_show"]}},
+        {"_id": 0}
+    )
+    
+    brand = await get_brand_for_pdf()
+    lang = client.get("preferred_language", "en")
+    labels = PDF_LABELS[lang]
+    styles = create_pdf_styles()
+    
+    # Create PDF
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.5*inch)
+    elements = []
+    
+    # Header
+    build_pdf_header(elements, brand, lang, styles)
+    
+    # Title
+    elements.append(Paragraph(labels["case_summary"], styles['CustomTitle']))
+    elements.append(Spacer(1, 20))
+    
+    # Client Information Section
+    elements.append(Paragraph(labels["client_information"], styles['CustomHeading']))
+    client_data = [
+        [labels["name"] + ":", client.get("full_name", "-")],
+        [labels["phone"] + ":", client.get("phone", "-")],
+        [labels["email"] + ":", client.get("email", "-")],
+        [labels["address"] + ":", client.get("address", "-")],
+        [labels["preferred_language"] + ":", "Español" if lang == "es" else "English"],
+    ]
+    elements.append(create_info_table(client_data, styles))
+    
+    # Service Information Section
+    elements.append(Paragraph(labels["service_information"], styles['CustomHeading']))
+    service_name = service.get(f"name_{lang}", service.get("name_en", "-")) if service else "-"
+    status_labels = {
+        "new": "Nuevo" if lang == "es" else "New",
+        "waiting_docs": "Esperando Docs" if lang == "es" else "Waiting Docs",
+        "in_review": "En Revisión" if lang == "es" else "In Review",
+        "submitted": "Enviado" if lang == "es" else "Submitted",
+        "completed": "Completado" if lang == "es" else "Completed",
+    }
+    priority_labels = {
+        "low": "Baja" if lang == "es" else "Low",
+        "normal": "Normal",
+        "high": "Alta" if lang == "es" else "High",
+        "urgent": "Urgente" if lang == "es" else "Urgent",
+    }
+    service_data = [
+        [labels["service"] + ":", service_name],
+        [labels["status"] + ":", status_labels.get(case.get("status"), case.get("status", "-"))],
+        [labels["priority"] + ":", priority_labels.get(case.get("priority"), case.get("priority", "-"))],
+        [labels["assigned_to"] + ":", staff_member.get("full_name", "-") if staff_member else "-"],
+        [labels["due_date"] + ":", case.get("due_date", "-") or "-"],
+    ]
+    elements.append(create_info_table(service_data, styles))
+    
+    # Checklist Progress Section
+    checklist = case.get("checklist", [])
+    if checklist:
+        elements.append(Paragraph(labels["checklist_progress"], styles['CustomHeading']))
+        completed_count = sum(1 for item in checklist if item.get("completed"))
+        progress_text = f"{completed_count}/{len(checklist)} {labels['completed']}"
+        elements.append(Paragraph(progress_text, styles['CustomBody']))
+        
+        for item in checklist:
+            status_mark = "✓" if item.get("completed") else "○"
+            status_text = labels["completed"] if item.get("completed") else labels["pending"]
+            elements.append(Paragraph(f"  {status_mark} {item.get('item', '')} - {status_text}", styles['CustomBody']))
+    
+    # Notes Section
+    if case.get("notes"):
+        elements.append(Paragraph(labels["recent_notes"], styles['CustomHeading']))
+        elements.append(Paragraph(case.get("notes", ""), styles['CustomBody']))
+    
+    # Upcoming Appointment Section
+    if next_apt:
+        elements.append(Paragraph(labels["upcoming_appointment"], styles['CustomHeading']))
+        apt_service = await db.services.find_one({"id": next_apt["service_id"]}, {"_id": 0})
+        apt_service_name = apt_service.get(f"name_{lang}", apt_service.get("name_en", "")) if apt_service else ""
+        apt_data = [
+            [labels["service"] + ":", apt_service_name],
+            [labels["date_time"] + ":", f"{next_apt.get('date', '')} {next_apt.get('time', '')}"],
+        ]
+        elements.append(create_info_table(apt_data, styles))
+    
+    # Footer
+    build_pdf_footer(elements, brand, lang, styles)
+    
+    doc.build(elements)
+    buffer.seek(0)
+    
+    filename = f"case_summary_{case_id[:8]}_{datetime.now().strftime('%Y%m%d')}.pdf"
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+@api_router.get("/pdf/client/{client_id}")
+async def generate_client_pdf(client_id: str, user: dict = Depends(get_current_user)):
+    """Generate Client Summary PDF"""
+    client = await db.clients.find_one({"id": client_id}, {"_id": 0})
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+    
+    # Get recent appointments (last 5)
+    appointments = await db.appointments.find(
+        {"client_id": client_id},
+        {"_id": 0}
+    ).sort("date", -1).limit(5).to_list(5)
+    
+    # Get recent cases (last 5)
+    cases = await db.service_requests.find(
+        {"client_id": client_id},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(5).to_list(5)
+    
+    # Get services for name lookup
+    services = {s["id"]: s for s in await db.services.find({}, {"_id": 0}).to_list(100)}
+    staff_list = {s["id"]: s for s in await db.staff.find({}, {"_id": 0}).to_list(100)}
+    
+    brand = await get_brand_for_pdf()
+    lang = client.get("preferred_language", "en")
+    labels = PDF_LABELS[lang]
+    styles = create_pdf_styles()
+    
+    # Create PDF
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.5*inch)
+    elements = []
+    
+    # Header
+    build_pdf_header(elements, brand, lang, styles)
+    
+    # Title
+    elements.append(Paragraph(labels["client_summary"], styles['CustomTitle']))
+    elements.append(Spacer(1, 20))
+    
+    # Client Information Section
+    elements.append(Paragraph(labels["client_information"], styles['CustomHeading']))
+    status_labels = {
+        "lead": "Prospecto" if lang == "es" else "Lead",
+        "active": "Activo" if lang == "es" else "Active",
+        "completed": "Completado" if lang == "es" else "Completed",
+        "archived": "Archivado" if lang == "es" else "Archived",
+    }
+    client_data = [
+        [labels["name"] + ":", client.get("full_name", "-")],
+        [labels["status"] + ":", status_labels.get(client.get("status"), client.get("status", "-"))],
+        [labels["phone"] + ":", client.get("phone", "-")],
+        [labels["email"] + ":", client.get("email", "-")],
+        [labels["address"] + ":", client.get("address", "-")],
+        [labels["preferred_language"] + ":", "Español" if lang == "es" else "English"],
+    ]
+    if client.get("assigned_staff_id"):
+        staff = staff_list.get(client["assigned_staff_id"])
+        client_data.append([labels["assigned_to"] + ":", staff.get("full_name", "-") if staff else "-"])
+    elements.append(create_info_table(client_data, styles))
+    
+    # Appointment History Section
+    if appointments:
+        elements.append(Paragraph(labels["appointment_history"], styles['CustomHeading']))
+        apt_status_labels = {
+            "scheduled": "Programada" if lang == "es" else "Scheduled",
+            "confirmed": "Confirmada" if lang == "es" else "Confirmed",
+            "completed": "Completada" if lang == "es" else "Completed",
+            "cancelled": "Cancelada" if lang == "es" else "Cancelled",
+            "no_show": "No Asistió" if lang == "es" else "No Show",
+        }
+        for apt in appointments:
+            service = services.get(apt.get("service_id"), {})
+            service_name = service.get(f"name_{lang}", service.get("name_en", "-"))
+            status = apt_status_labels.get(apt.get("status"), apt.get("status", "-"))
+            elements.append(Paragraph(f"• {apt.get('date', '')} {apt.get('time', '')} - {service_name} ({status})", styles['CustomBody']))
+    
+    # Case History Section
+    if cases:
+        elements.append(Paragraph(labels["case_history"], styles['CustomHeading']))
+        case_status_labels = {
+            "new": "Nuevo" if lang == "es" else "New",
+            "waiting_docs": "Esperando Docs" if lang == "es" else "Waiting Docs",
+            "in_review": "En Revisión" if lang == "es" else "In Review",
+            "submitted": "Enviado" if lang == "es" else "Submitted",
+            "completed": "Completado" if lang == "es" else "Completed",
+        }
+        for case in cases:
+            service = services.get(case.get("service_id"), {})
+            service_name = service.get(f"name_{lang}", service.get("name_en", "-"))
+            status = case_status_labels.get(case.get("status"), case.get("status", "-"))
+            checklist = case.get("checklist", [])
+            progress = f"{sum(1 for c in checklist if c.get('completed'))}/{len(checklist)}" if checklist else "-"
+            elements.append(Paragraph(f"• {service_name} - {status} ({progress} docs)", styles['CustomBody']))
+    
+    # Notes Section
+    if client.get("notes"):
+        elements.append(Paragraph(labels["notes"], styles['CustomHeading']))
+        elements.append(Paragraph(client.get("notes", ""), styles['CustomBody']))
+    
+    # Footer
+    build_pdf_footer(elements, brand, lang, styles)
+    
+    doc.build(elements)
+    buffer.seek(0)
+    
+    filename = f"client_summary_{client_id[:8]}_{datetime.now().strftime('%Y%m%d')}.pdf"
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+@api_router.get("/pdf/appointment/{appointment_id}")
+async def generate_appointment_pdf(appointment_id: str, user: dict = Depends(get_current_user)):
+    """Generate Appointment Confirmation PDF"""
+    apt = await db.appointments.find_one({"id": appointment_id}, {"_id": 0})
+    if not apt:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+    
+    client = await db.clients.find_one({"id": apt["client_id"]}, {"_id": 0})
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+    
+    service = await db.services.find_one({"id": apt["service_id"]}, {"_id": 0})
+    staff_member = None
+    if apt.get("assigned_staff_id"):
+        staff_member = await db.staff.find_one({"id": apt["assigned_staff_id"]}, {"_id": 0})
+    
+    brand = await get_brand_for_pdf()
+    lang = client.get("preferred_language", "en")
+    labels = PDF_LABELS[lang]
+    styles = create_pdf_styles()
+    
+    # Create PDF
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.5*inch)
+    elements = []
+    
+    # Header
+    build_pdf_header(elements, brand, lang, styles)
+    
+    # Title
+    elements.append(Paragraph(labels["appointment_confirmation"], styles['CustomTitle']))
+    elements.append(Spacer(1, 20))
+    
+    # Client Information Section
+    elements.append(Paragraph(labels["client_information"], styles['CustomHeading']))
+    client_data = [
+        [labels["name"] + ":", client.get("full_name", "-")],
+        [labels["phone"] + ":", client.get("phone", "-")],
+        [labels["email"] + ":", client.get("email", "-")],
+    ]
+    elements.append(create_info_table(client_data, styles))
+    
+    # Appointment Details Section
+    service_name = service.get(f"name_{lang}", service.get("name_en", "-")) if service else "-"
+    apt_status_labels = {
+        "scheduled": "Programada" if lang == "es" else "Scheduled",
+        "confirmed": "Confirmada" if lang == "es" else "Confirmed",
+        "completed": "Completada" if lang == "es" else "Completed",
+        "cancelled": "Cancelada" if lang == "es" else "Cancelled",
+        "no_show": "No Asistió" if lang == "es" else "No Show",
+    }
+    
+    elements.append(Paragraph(labels["service_information"], styles['CustomHeading']))
+    apt_data = [
+        [labels["service"] + ":", service_name],
+        [labels["date_time"] + ":", f"{apt.get('date', '')} {apt.get('time', '')}"],
+        [labels["status"] + ":", apt_status_labels.get(apt.get("status"), apt.get("status", "-"))],
+        [labels["assigned_to"] + ":", staff_member.get("full_name", "-") if staff_member else "-"],
+    ]
+    elements.append(create_info_table(apt_data, styles))
+    
+    # Location Section
+    if brand.get("address"):
+        address_label = "Ubicación" if lang == "es" else "Location"
+        elements.append(Paragraph(address_label, styles['CustomHeading']))
+        elements.append(Paragraph(brand.get("address", ""), styles['CustomBody']))
+    
+    # Notes Section
+    if apt.get("notes"):
+        elements.append(Paragraph(labels["notes"], styles['CustomHeading']))
+        elements.append(Paragraph(apt.get("notes", ""), styles['CustomBody']))
+    
+    # Footer
+    build_pdf_footer(elements, brand, lang, styles)
+    
+    doc.build(elements)
+    buffer.seek(0)
+    
+    filename = f"appointment_{appointment_id[:8]}_{datetime.now().strftime('%Y%m%d')}.pdf"
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
 # ============ SEED DATA ============
 
 @api_router.post("/seed")
