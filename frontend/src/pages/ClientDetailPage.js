@@ -56,6 +56,31 @@ export default function ClientDetailPage() {
     return member?.full_name || '-';
   };
 
+  const handleDownloadPDF = async () => {
+    setDownloading(true);
+    try {
+      const response = await axios.get(`${API}/pdf/client/${id}`, {
+        responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `client_summary_${id.slice(0, 8)}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success(language === 'es' ? 'PDF descargado' : 'PDF downloaded');
+    } catch (error) {
+      console.error('Failed to download PDF:', error);
+      toast.error(language === 'es' ? 'Error al descargar PDF' : 'Failed to download PDF');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   const getStatusBadge = (status, type) => {
     const colors = {
       // Client statuses
