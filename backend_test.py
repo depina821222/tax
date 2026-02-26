@@ -516,11 +516,21 @@ class TaxOfficeAPITester:
         # Authentication tests
         login_success = self.test_login()
         
+        # P1 Feature: Forgot Password
+        self.test_forgot_password()
+        
         if login_success:
             # Protected endpoint tests
             self.test_dashboard_stats()
             self.test_clients_list()
             self.test_brand_settings_update()
+            
+            # P1 Feature: SMS Status
+            self.test_sms_status()
+            
+            # P1 Feature: Domain Settings & Verification
+            self.test_domain_settings()
+            self.test_domain_verification()
         
         # Public endpoint tests
         self.test_services_list()
