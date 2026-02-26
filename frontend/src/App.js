@@ -79,6 +79,7 @@ function AppRoutes() {
         <Route path="clients" element={<ClientsPage />} />
         <Route path="clients/:id" element={<ClientDetailPage />} />
         <Route path="services" element={<ServicesPage />} />
+        <Route path="services/:id" element={<ServiceDetailPage />} />
         <Route path="cases" element={<CasesPage />} />
         <Route path="cases/:id" element={<CaseDetailPage />} />
         <Route path="templates" element={<TemplatesPage />} />
