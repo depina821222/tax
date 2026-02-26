@@ -112,6 +112,30 @@ Build a full-stack bilingual (EN/ES) CRM Portal + Appointment System for a small
 - [x] **Bilingual PDFs**: Labels in EN or ES based on client's preferred language
 - [x] **PDF Styling**: Clean typography, gold accent color, proper spacing
 
+## Custom Domain Configuration (Prepared - Feb 26, 2026)
+- [x] Domain configuration fields added to Brand Settings model
+  - `custom_domain_admin`: admin.depinacrm.com
+  - `custom_domain_portal`: portal.depinacrm.com
+  - `custom_domain_booking`: (optional)
+  - `domain_verified`: false
+  - `ssl_enabled`: false
+- [x] DNS instructions in Brand Settings → Domain tab
+- [x] Domain verification endpoint scaffolded
+- [x] Force password reset for demo accounts implemented
+  - All 3 demo accounts (admin, staff1, staff2) now require password change on login
+  - Modal appears after login with New Password / Confirm Password fields
+  - Password cleared from force_password_reset after successful change
+
+## Deployment Steps for Custom Domains
+1. Click **Deploy** in Emergent platform
+2. After deployment, go to **Link domain** via Entri flow
+3. Add domains: `admin.depinacrm.com`, `portal.depinacrm.com`
+4. Configure DNS:
+   - Type: CNAME
+   - Name: admin (or portal)
+   - Value: cname.emergentagent.com
+5. SSL certificates provisioned automatically
+
 ## Demo Credentials
 - Admin: admin@taxoffice.com / admin123
 - Staff1: staff1@taxoffice.com / staff123
