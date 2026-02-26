@@ -313,6 +313,31 @@ async def send_email_async(to_email: str, subject: str, html_content: str):
         logger.error(f"Failed to send email: {str(e)}")
         return None
 
+async def send_sms_async(to_phone: str, message: str):
+    """Send SMS via Twilio"""
+    if not twilio_client or not TWILIO_PHONE_NUMBER:
+        logger.warning(f"SMS not sent (Twilio not configured): {message[:50]}... to {to_phone}")
+        return None
+    
+    # Ensure phone number is in E.164 format
+    formatted_phone = to_phone.strip()
+    if not formatted_phone.startswith('+'):
+        # Assume US number if no country code
+        formatted_phone = '+1' + formatted_phone.replace('-', '').replace(' ', '').replace('(', '').replace(')', '')
+    
+    try:
+        result = await asyncio.to_thread(
+            twilio_client.messages.create,
+            body=message,
+            from_=TWILIO_PHONE_NUMBER,
+            to=formatted_phone
+        )
+        logger.info(f"SMS sent to {to_phone}: SID={result.sid}")
+        return {"sid": result.sid, "status": result.status}
+    except Exception as e:
+        logger.error(f"Failed to send SMS to {to_phone}: {str(e)}")
+        return None
+
 def render_template(template: dict, variables: dict, language: str = "en") -> tuple:
     subject = template.get(f"subject_{language}", template.get("subject_en", ""))
     body = template.get(f"body_{language}", template.get("body_en", ""))
