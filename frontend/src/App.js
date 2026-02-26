@@ -74,10 +74,12 @@ function AppRoutes() {
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="calendar" element={<CalendarPage />} />
         <Route path="appointments" element={<AppointmentsPage />} />
+        <Route path="appointments/:id" element={<AppointmentDetailPage />} />
         <Route path="clients" element={<ClientsPage />} />
         <Route path="clients/:id" element={<ClientDetailPage />} />
         <Route path="services" element={<ServicesPage />} />
         <Route path="cases" element={<CasesPage />} />
+        <Route path="cases/:id" element={<CaseDetailPage />} />
         <Route path="templates" element={<TemplatesPage />} />
         <Route path="staff" element={
           <ProtectedRoute adminOnly>
