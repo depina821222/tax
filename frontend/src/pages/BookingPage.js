@@ -308,23 +308,31 @@ export default function BookingPage() {
                   <div
                     key={service.id}
                     onClick={() => setFormData({ ...formData, service_id: service.id })}
-                    className={`p-4 rounded-sm border cursor-pointer transition-all ${
-                      formData.service_id === service.id
-                        ? 'border-[#D4AF37] bg-[#D4AF37]/10'
-                        : 'border-slate-800 hover:border-slate-700'
-                    }`}
+                    onKeyDown={(e) => e.key === 'Enter' && setFormData({ ...formData, service_id: service.id })}
+                    tabIndex={0}
+                    role="radio"
+                    aria-checked={formData.service_id === service.id}
+                    aria-label={language === 'es' ? service.name_es : service.name_en}
+                    className={`p-4 rounded-sm border cursor-pointer transition-all duration-200
+                      focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50
+                      ${formData.service_id === service.id
+                        ? 'border-[#D4AF37] bg-[#D4AF37]/10 shadow-lg shadow-[#D4AF37]/10'
+                        : 'border-slate-800 hover:border-[#D4AF37]/50 hover:bg-slate-800/50 hover:-translate-y-0.5'
+                      }`}
                     data-testid={`service-option-${service.id}`}
                   >
                     <div className="flex items-start gap-4">
-                      <div className={`w-12 h-12 rounded-sm flex items-center justify-center ${
+                      <div className={`w-12 h-12 rounded-sm flex items-center justify-center transition-colors ${
                         formData.service_id === service.id ? 'bg-[#D4AF37]/20' : 'bg-slate-800'
                       }`}>
-                        <FileText className={`w-6 h-6 ${
+                        <FileText className={`w-6 h-6 transition-colors ${
                           formData.service_id === service.id ? 'text-[#D4AF37]' : 'text-slate-500'
                         }`} />
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-medium text-slate-200">
+                        <h3 className={`font-medium transition-colors ${
+                          formData.service_id === service.id ? 'text-[#D4AF37]' : 'text-slate-200'
+                        }`}>
                           {language === 'es' ? service.name_es : service.name_en}
                         </h3>
                         <p className="text-sm text-slate-400 mt-1">
@@ -337,9 +345,15 @@ export default function BookingPage() {
                           </span>
                         </div>
                       </div>
-                      {formData.service_id === service.id && (
-                        <CheckCircle className="w-5 h-5 text-[#D4AF37]" />
-                      )}
+                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                        formData.service_id === service.id
+                          ? 'border-[#D4AF37] bg-[#D4AF37]'
+                          : 'border-slate-600'
+                      }`}>
+                        {formData.service_id === service.id && (
+                          <CheckCircle className="w-4 h-4 text-slate-950" />
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
