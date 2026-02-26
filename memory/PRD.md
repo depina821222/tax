@@ -76,6 +76,26 @@ Build a full-stack bilingual (EN/ES) CRM Portal + Appointment System for a small
 - [x] **Client Detail Page** enhancement
   - Added "Download Client Summary (PDF)" button
   - Shows appointment history, case history, notes
+- [x] **Service Cards Clickable** (/portal/services)
+  - All service cards fully clickable with hover lift + border highlight
+  - Navigate to /portal/services/:id detail page
+  - Keyboard accessible (Tab + Enter)
+- [x] **Service Detail Page** (/portal/services/:id)
+  - Overview section (name EN/ES, description, duration)
+  - Required Documents list
+  - Workflow Stages visualization
+  - "Create Service Request" and "Download Service Summary (PDF)" buttons
+- [x] **Booking Page Service Selection** (/book Step 1)
+  - Fully clickable service items
+  - Clear hover state with border highlight
+  - Selected state with gold border, glow, and checkmark
+  - Keyboard accessible
+- [x] **Professional Hero Background** (/book)
+  - Dark navy gradient (135deg)
+  - Subtle grid pattern overlay (3% opacity)
+  - Vignette effect for depth
+  - Gold accent glow at top
+  - Brand watermark (if logo exists)
 
 ### PDF Generation (COMPLETE - Feb 26, 2026)
 - [x] **Backend PDF Endpoints** using ReportLab
