@@ -1432,7 +1432,7 @@ async def seed_demo_data():
 # ============ REMINDER JOB ============
 
 async def send_48h_reminders():
-    """Background job to send 48-hour appointment reminders"""
+    """Background job to send 48-hour appointment reminders via email and SMS"""
     settings = await db.settings.find_one({}, {"_id": 0}) or {}
     if not settings.get("enable_reminders", True):
         return
@@ -1448,22 +1448,26 @@ async def send_48h_reminders():
         "reminder_sent_48h": False
     }, {"_id": 0}).to_list(100)
     
-    template = await db.templates.find_one({"name": "reminder_48h", "type": "email"}, {"_id": 0})
-    if not template:
-        logger.warning("48h reminder template not found")
+    # Get email template
+    email_template = await db.templates.find_one({"name": "reminder_48h", "type": "email"}, {"_id": 0})
+    # Get SMS template
+    sms_template = await db.templates.find_one({"name": "reminder_48h", "type": "sms"}, {"_id": 0})
+    
+    if not email_template and not sms_template:
+        logger.warning("No 48h reminder templates found")
         return
     
     for apt in appointments:
         try:
-            client = await db.clients.find_one({"id": apt["client_id"]}, {"_id": 0})
+            client_doc = await db.clients.find_one({"id": apt["client_id"]}, {"_id": 0})
             service = await db.services.find_one({"id": apt["service_id"]}, {"_id": 0})
             
-            if not client or not client.get("email"):
+            if not client_doc:
                 continue
             
-            lang = client.get("preferred_language", "en")
+            lang = client_doc.get("preferred_language", "en")
             variables = {
-                "client_name": client["full_name"],
+                "client_name": client_doc["full_name"],
                 "service": service.get(f"name_{lang}", service.get("name_en", "")),
                 "date": apt["date"],
                 "time": apt["time"],
@@ -1471,14 +1475,35 @@ async def send_48h_reminders():
                 "phone": settings.get("phone", "")
             }
             
-            subject, body = render_template(template, variables, lang)
-            await send_email_async(client["email"], subject, body)
+            email_sent = False
+            sms_sent = False
             
-            await db.appointments.update_one(
-                {"id": apt["id"]},
-                {"$set": {"reminder_sent_48h": True}}
-            )
-            logger.info(f"48h reminder sent for appointment {apt['id']}")
+            # Send email if client has email and email template exists
+            if client_doc.get("email") and email_template:
+                subject, body = render_template(email_template, variables, lang)
+                result = await send_email_async(client_doc["email"], subject, body)
+                email_sent = result is not None
+            
+            # Send SMS if enabled, client has phone, and SMS template exists
+            if settings.get("enable_sms", False) and client_doc.get("phone") and sms_template:
+                _, sms_body = render_template(sms_template, variables, lang)
+                # Strip HTML tags for SMS
+                import re
+                sms_text = re.sub('<[^<]+?>', '', sms_body)
+                result = await send_sms_async(client_doc["phone"], sms_text)
+                sms_sent = result is not None
+            
+            # Mark reminder as sent if at least one channel succeeded
+            if email_sent or sms_sent:
+                await db.appointments.update_one(
+                    {"id": apt["id"]},
+                    {"$set": {
+                        "reminder_sent_48h": True,
+                        "reminder_email_sent": email_sent,
+                        "reminder_sms_sent": sms_sent
+                    }}
+                )
+                logger.info(f"48h reminder sent for appointment {apt['id']} (email={email_sent}, sms={sms_sent})")
         except Exception as e:
             logger.error(f"Error sending reminder for appointment {apt['id']}: {str(e)}")
 
