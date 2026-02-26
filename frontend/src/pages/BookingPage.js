@@ -204,19 +204,65 @@ export default function BookingPage() {
         </div>
       </header>
 
-      {/* Hero Section */}
+      {/* Hero Section - Professional Background */}
       <div 
-        className="py-12 text-center border-b border-slate-800"
+        className="py-12 text-center border-b border-slate-800 relative overflow-hidden"
         style={{ 
-          background: `linear-gradient(to bottom, ${brand.primary_color}40, transparent)`
+          background: `linear-gradient(135deg, ${brand.primary_color || '#020617'} 0%, #0f172a 50%, #1e293b 100%)`
         }}
       >
-        <h1 className="text-3xl md:text-4xl font-bold font-serif text-slate-100 mb-3">
-          {getHeroTitle(language)}
-        </h1>
-        <p className="text-slate-400 max-w-xl mx-auto px-4">
-          {getHeroSubtitle(language)}
-        </p>
+        {/* Subtle grid pattern overlay */}
+        <div 
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `
+              linear-gradient(rgba(212, 175, 55, 0.5) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(212, 175, 55, 0.5) 1px, transparent 1px)
+            `,
+            backgroundSize: '40px 40px'
+          }}
+        />
+        
+        {/* Vignette effect */}
+        <div 
+          className="absolute inset-0"
+          style={{
+            background: 'radial-gradient(ellipse at center, transparent 0%, rgba(2, 6, 23, 0.6) 100%)'
+          }}
+        />
+        
+        {/* Subtle brand watermark */}
+        {brand.logo_url && (
+          <div 
+            className="absolute inset-0 flex items-center justify-center opacity-[0.03]"
+            style={{ pointerEvents: 'none' }}
+          >
+            <img 
+              src={brand.logo_url} 
+              alt="" 
+              className="w-96 h-96 object-contain"
+              style={{ filter: 'grayscale(100%)' }}
+            />
+          </div>
+        )}
+        
+        {/* Gold accent glow at top */}
+        <div 
+          className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[200px]"
+          style={{
+            background: `radial-gradient(ellipse at center top, ${brand.accent_color || '#D4AF37'}15 0%, transparent 70%)`
+          }}
+        />
+        
+        {/* Content */}
+        <div className="relative z-10">
+          <h1 className="text-3xl md:text-4xl font-bold font-serif text-slate-100 mb-3">
+            {getHeroTitle(language)}
+          </h1>
+          <p className="text-slate-400 max-w-xl mx-auto px-4">
+            {getHeroSubtitle(language)}
+          </p>
+        </div>
       </div>
 
       {/* Progress Steps */}
