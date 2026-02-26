@@ -467,9 +467,25 @@ async def change_password(request: ChangePasswordRequest, user: dict = Depends(g
         raise HTTPException(status_code=400, detail="Current password incorrect")
     await db.users.update_one(
         {"id": user["id"]},
-        {"$set": {"password": hash_password(request.new_password)}}
+        {"$set": {
+            "password": hash_password(request.new_password),
+            "force_password_reset": False  # Clear the flag after password change
+        }}
     )
     return {"message": "Password changed successfully"}
+
+@api_router.post("/auth/force-password-reset-all")
+async def force_password_reset_all(admin: dict = Depends(require_admin)):
+    """Force password reset for all demo accounts (admin only)"""
+    demo_emails = ["admin@taxoffice.com", "staff1@taxoffice.com", "staff2@taxoffice.com"]
+    result = await db.users.update_many(
+        {"email": {"$in": demo_emails}},
+        {"$set": {"force_password_reset": True}}
+    )
+    return {
+        "message": f"Force password reset enabled for {result.modified_count} demo accounts",
+        "accounts_affected": result.modified_count
+    }
 
 # ============ USERS/STAFF ROUTES ============
 
